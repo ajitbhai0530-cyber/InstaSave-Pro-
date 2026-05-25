@@ -1,0 +1,552 @@
+```react
+import React, { useState, useEffect } from 'react';
+import { 
+  Menu, X, Download, Link2, CheckCircle2, Zap, Shield, Smartphone, 
+  Image as ImageIcon, PlayCircle, Star, Instagram, ChevronDown, 
+  ArrowRight, Twitter, Github, Linkedin
+} from 'lucide-react';
+
+// --- Mock Data ---
+const FEATURES = [
+  { icon: <Zap className="text-purple-400" size={24} />, title: "Lightning Fast", desc: "Our servers process and deliver your downloads in milliseconds." },
+  { icon: <Shield className="text-purple-400" size={24} />, title: "Secure & Private", desc: "No login required. We don't track your downloads or store history." },
+  { icon: <Smartphone className="text-purple-400" size={24} />, title: "Mobile Optimized", desc: "Works flawlessly on iOS and Android devices natively." },
+  { icon: <PlayCircle className="text-purple-400" size={24} />, title: "Reels Support", desc: "Download any public Instagram Reel in full HD quality." },
+  { icon: <ImageIcon className="text-purple-400" size={24} />, title: "Photo & Carousel", desc: "Extract multiple images from carousel posts instantly." },
+  { icon: <Download className="text-purple-400" size={24} />, title: "Unlimited Usage", desc: "No daily limits or hidden fees. Completely free to use." },
+];
+
+const FAQS = [
+  { q: "Is InstaSave Pro free to use?", a: "Yes, our tool is 100% free and always will be. There are no hidden charges." },
+  { q: "Do I need to log in to Instagram?", a: "No! We do not ask for your Instagram password or require any login to download public content." },
+  { q: "Can I download Reels?", a: "Absolutely. Just paste the Reel link, and you can download it in MP4 format." },
+  { q: "Is it safe to use?", a: "Yes, we use advanced encryption and do not store any files you download on our servers." },
+  { q: "Where are videos saved on mobile?", a: "Downloads usually go to your 'Downloads' folder or directly to your Photos/Gallery app depending on your OS." }
+];
+
+const REVIEWS = [
+  { name: "Sarah J.", role: "Content Creator", text: "The fastest downloader I've used. The UI is just gorgeous.", rating: 5 },
+  { name: "Mike T.", role: "Marketer", text: "Saves me hours when compiling mood boards. Highly recommend.", rating: 5 },
+  { name: "Elena R.", role: "Photographer", text: "Love that it downloads the highest quality available. No compression.", rating: 5 }
+];
+
+const BLOG_POSTS = [
+  { title: "How to Grow Your Instagram in 2026", date: "May 15, 2026", category: "Tips" },
+  { title: "Top 5 Tools Every Content Creator Needs", date: "May 10, 2026", category: "Resources" },
+  { title: "Understanding Instagram's New Algorithm", date: "May 02, 2026", category: "News" }
+];
+
+// --- Shared Components ---
+
+const GradientText = ({ children, className = "" }) => (
+  <span className={`bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400 ${className}`}>
+    {children}
+  </span>
+);
+
+const Button = ({ children, variant = 'primary', className = "", ...props }) => {
+  const baseStyle = "px-6 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 active:scale-95";
+  const variants = {
+    primary: "bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)]",
+    outline: "border border-white/20 bg-white/5 hover:bg-white/10 text-white backdrop-blur-sm",
+    ghost: "text-gray-300 hover:text-white hover:bg-white/5"
+  };
+  return (
+    <button className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>
+      {children}
+    </button>
+  );
+};
+
+const Toast = ({ message, isVisible }) => (
+  <div className={`fixed bottom-4 right-4 z-50 transition-all duration-300 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 pointer-events-none'}`}>
+    <div className="bg-slate-800 border border-slate-700 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-3">
+      <CheckCircle2 className="text-green-400" size={20} />
+      <span className="font-medium text-sm">{message}</span>
+    </div>
+  </div>
+);
+
+// --- Core Downloader Component ---
+const Downloader = ({ showToast }) => {
+  const [url, setUrl] = useState('');
+  const [status, setStatus] = useState('idle'); // idle, loading, success, error
+  const [errorMsg, setErrorMsg] = useState('');
+  const [mediaData, setMediaData] = useState(null);
+
+  const handleProcess = () => {
+    if (!url.trim()) {
+      setErrorMsg('Please enter a valid URL');
+      setStatus('error');
+      return;
+    }
+    if (!url.includes('instagram.com')) {
+      setErrorMsg('Invalid Instagram URL. Please check the link.');
+      setStatus('error');
+      return;
+    }
+
+    setStatus('loading');
+    setErrorMsg('');
+    
+    // Simulate API Call
+    setTimeout(() => {
+      setStatus('success');
+      setMediaData({
+        thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80',
+        author: '@creative_user',
+        desc: 'Beautiful moments captured today! ✨📸 #photography',
+        type: url.includes('reel') ? 'video' : 'image',
+        likes: '12.4k'
+      });
+      showToast('Media ready for download!');
+    }, 2000);
+  };
+
+  const executeDownload = (type) => {
+    showToast(`Downloading ${type}...`);
+    // Simulated download process
+    setTimeout(() => {
+      showToast('Download complete!');
+      setUrl('');
+      setStatus('idle');
+    }, 1500);
+  };
+
+  return (
+    <div className="w-full max-w-3xl mx-auto relative z-10">
+      {/* Input Area */}
+      <div className={`bg-slate-800/80 backdrop-blur-xl p-2 rounded-2xl border transition-all duration-300 ${status === 'error' ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-white/10 shadow-2xl'}`}>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Link2 className="text-gray-400" size={20} />
+            </div>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                if(status === 'error') setStatus('idle');
+              }}
+              placeholder="Paste Instagram URL here..."
+              className="w-full bg-slate-900/50 text-white placeholder-gray-500 rounded-xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+            />
+          </div>
+          <Button onClick={handleProcess} disabled={status === 'loading'} className="sm:w-auto w-full py-4">
+            {status === 'loading' ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing
+              </span>
+            ) : 'Get Download'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Error Message */}
+      {status === 'error' && (
+        <div className="mt-3 text-red-400 text-sm font-medium px-4 text-center animate-pulse">
+          {errorMsg}
+        </div>
+      )}
+
+      {/* Result Card */}
+      {status === 'success' && mediaData && (
+        <div className="mt-6 bg-slate-800/80 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex flex-col sm:flex-row gap-6">
+            {/* Thumbnail */}
+            <div className="w-full sm:w-1/3 relative rounded-xl overflow-hidden group">
+              <img src={mediaData.thumbnail} alt="Preview" className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110" />
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {mediaData.type === 'video' ? <PlayCircle className="text-white" size={40} /> : <ImageIcon className="text-white" size={40} />}
+              </div>
+            </div>
+            
+            {/* Info & Actions */}
+            <div className="w-full sm:w-2/3 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-purple-500/20 text-purple-300 text-xs px-2 py-1 rounded-md font-medium uppercase tracking-wider">
+                    {mediaData.type}
+                  </span>
+                  <span className="text-gray-400 text-sm">{mediaData.likes} likes</span>
+                </div>
+                <h3 className="text-white font-semibold text-lg mb-1">{mediaData.author}</h3>
+                <p className="text-gray-400 text-sm line-clamp-2 mb-4">{mediaData.desc}</p>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button onClick={() => executeDownload('HD MP4')} className="flex-1">
+                  <Download size={18} /> Download {mediaData.type === 'video' ? 'Video' : 'Image'}
+                </Button>
+                {mediaData.type === 'video' && (
+                  <Button variant="outline" onClick={() => executeDownload('Audio MP3')} className="flex-1">
+                    Download Audio
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
+// --- Pages ---
+
+const HomePage = ({ navigate, showToast }) => {
+  return (
+    <div className="flex flex-col gap-24 pb-20">
+      {/* Hero Section */}
+      <section className="relative pt-20 pb-10">
+        {/* Abstract Background Elements */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+        <div className="absolute top-20 right-20 w-[300px] h-[300px] bg-blue-600/20 rounded-full blur-[100px] pointer-events-none"></div>
+        
+        <div className="max-w-4xl mx-auto text-center px-4 relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-sm text-gray-300 mb-6">
+            <Zap size={14} className="text-yellow-400" />
+            <span>V2.0 is live! Faster downloads.</span>
+          </div>
+          <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight tracking-tight">
+            Download Instagram <br className="hidden md:block"/>
+            <GradientText>Content Instantly.</GradientText>
+          </h1>
+          <p className="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+            The fastest, most secure tool to download Instagram Videos, Reels, Photos, and IGTV in original HD quality. No login required.
+          </p>
+          
+          <Downloader showToast={showToast} />
+          
+          <div className="mt-8 text-sm text-gray-500 flex items-center justify-center gap-2">
+            <LockIcon size={14} /> 100% Free, Secure & Anonymous
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="max-w-6xl mx-auto px-4 w-full">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-white mb-4">How It Works</h2>
+          <p className="text-gray-400">Download any content in 3 simple steps</p>
+        </div>
+        <div className="grid md:grid-cols-3 gap-8 relative">
+          {/* Connector line */}
+          <div className="hidden md:block absolute top-1/2 left-10 right-10 h-0.5 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-y-1/2"></div>
+          
+          {[
+            { step: "01", title: "Copy Link", desc: "Open Instagram and copy the link of the Video, Photo, or Reel." },
+            { step: "02", title: "Paste URL", desc: "Paste the copied link into the input box at the top of this page." },
+            { step: "03", title: "Download", desc: "Click the download button and save the file to your device." }
+          ].map((item, i) => (
+            <div key={i} className="relative bg-slate-800/50 border border-white/5 rounded-2xl p-8 text-center backdrop-blur-sm z-10">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold mx-auto mb-6 shadow-lg">
+                {item.step}
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">{item.title}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="max-w-6xl mx-auto px-4 w-full" id="features">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-white mb-4">Premium Features</h2>
+          <p className="text-gray-400">Everything you need in an Instagram downloader</p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {FEATURES.map((feature, i) => (
+            <div key={i} className="bg-slate-800/30 border border-white/5 hover:border-purple-500/30 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10 group">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                {feature.icon}
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="max-w-6xl mx-auto px-4 w-full">
+        <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-white/10 rounded-3xl p-8 md:p-12">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-white mb-4">Loved by Creators</h2>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {REVIEWS.map((review, i) => (
+              <div key={i} className="bg-slate-900/50 rounded-2xl p-6 border border-white/5">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(review.rating)].map((_, j) => (
+                    <Star key={j} size={16} className="fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-gray-300 text-sm mb-6 italic">"{review.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-400 to-blue-400 flex items-center justify-center text-white font-bold">
+                    {review.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 className="text-white text-sm font-semibold">{review.name}</h4>
+                    <span className="text-gray-500 text-xs">{review.role}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="max-w-3xl mx-auto px-4 w-full" id="faq">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-white mb-4">Frequently Asked Questions</h2>
+        </div>
+        <div className="space-y-4">
+          {FAQS.map((faq, i) => (
+            <details key={i} className="group bg-slate-800/40 border border-white/5 rounded-xl open:bg-slate-800/80 transition-all">
+              <summary className="flex items-center justify-between p-6 cursor-pointer text-white font-medium list-none">
+                {faq.q}
+                <ChevronDown className="text-gray-400 group-open:rotate-180 transition-transform duration-300" size={20} />
+              </summary>
+              <div className="px-6 pb-6 text-gray-400 text-sm leading-relaxed">
+                {faq.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+};
+
+const GenericPage = ({ title, children }) => (
+  <div className="max-w-4xl mx-auto px-4 py-24 min-h-[70vh]">
+    <h1 className="text-4xl font-bold text-white mb-8"><GradientText>{title}</GradientText></h1>
+    <div className="prose prose-invert prose-purple max-w-none text-gray-300 leading-relaxed">
+      {children}
+    </div>
+  </div>
+);
+
+const BlogPage = () => (
+  <div className="max-w-6xl mx-auto px-4 py-24 min-h-[70vh]">
+    <h1 className="text-4xl font-bold text-white mb-12 text-center"><GradientText>Latest Updates & Tips</GradientText></h1>
+    <div className="grid md:grid-cols-3 gap-8">
+      {BLOG_POSTS.map((post, i) => (
+        <div key={i} className="bg-slate-800/40 border border-white/5 rounded-2xl overflow-hidden hover:border-purple-500/30 transition-all cursor-pointer group">
+          <div className="h-48 bg-slate-700 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent z-10" />
+            <img src={`https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?w=500&q=80&sig=${i}`} alt="Blog" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <span className="absolute bottom-4 left-4 z-20 text-xs font-semibold px-2 py-1 bg-purple-500 text-white rounded-md">{post.category}</span>
+          </div>
+          <div className="p-6">
+            <p className="text-gray-500 text-xs mb-2">{post.date}</p>
+            <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-purple-400 transition-colors">{post.title}</h3>
+            <div className="flex items-center text-sm text-purple-400 font-medium mt-4">
+              Read More <ArrowRight size={16} className="ml-1 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// Minimal dummy component to satisfy icon requirement safely
+const LockIcon = ({size}) => <Shield size={size} />;
+
+// --- Main App Component ---
+export default function App() {
+  const [currentPage, setCurrentPage] = useState('home');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '' });
+
+  const navigate = (page) => {
+    setCurrentPage(page);
+    setIsMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const showToast = (message) => {
+    setToast({ show: true, message });
+    setTimeout(() => setToast({ show: false, message: '' }), 3000);
+  };
+
+  const navLinks = [
+    { id: 'home', label: 'Home' },
+    { id: 'features', label: 'Features' },
+    { id: 'faq', label: 'FAQ' },
+    { id: 'blog', label: 'Blog' }
+  ];
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home': return <HomePage navigate={navigate} showToast={showToast} />;
+      case 'features': return <HomePage navigate={navigate} showToast={showToast} />; // Re-using home for fast scroll-to demo context
+      case 'faq': return <HomePage navigate={navigate} showToast={showToast} />;
+      case 'blog': return <BlogPage />;
+      case 'privacy': 
+        return <GenericPage title="Privacy Policy">
+          <p>Last updated: May 2026</p>
+          <p>At InstaSave Pro, accessible from our website, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by InstaSave Pro and how we use it.</p>
+          <h3>1. Information We Collect</h3>
+          <p>We do not collect personal information. We do not require account creation, and we do not store the URLs you process through our service.</p>
+          <h3>2. Log Files</h3>
+          <p>InstaSave Pro follows a standard procedure of using log files. These files log visitors when they visit websites. The information collected by log files include internet protocol (IP) addresses, browser type, Internet Service Provider (ISP), date and time stamp.</p>
+        </GenericPage>;
+      case 'terms':
+        return <GenericPage title="Terms of Service">
+          <p>Welcome to InstaSave Pro!</p>
+          <p>These terms and conditions outline the rules and regulations for the use of InstaSave Pro's Website.</p>
+          <h3>1. License</h3>
+          <p>Unless otherwise stated, InstaSave Pro and/or its licensors own the intellectual property rights for all material on InstaSave Pro. All intellectual property rights are reserved.</p>
+          <h3>2. User Responsibilities</h3>
+          <p>You must not use this tool to download copyrighted material without permission from the owner. This tool is for personal, fair-use purposes only.</p>
+        </GenericPage>;
+      default: return <HomePage navigate={navigate} showToast={showToast} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0b1121] text-slate-200 font-sans selection:bg-purple-500/30 overflow-x-hidden">
+      
+      {/* Navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0b1121]/80 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-6xl mx-auto px-4 h-20 flex items-center justify-between">
+          {/* Logo */}
+          <div 
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => navigate('home')}
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center shadow-lg">
+              <Instagram className="text-white" size={24} />
+            </div>
+            <span className="text-xl font-bold text-white tracking-tight">
+              InstaSave <span className="text-purple-400">Pro</span>
+            </span>
+          </div>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-8">
+            <div className="flex items-center gap-6">
+              {navLinks.map(link => (
+                <button 
+                  key={link.id}
+                  onClick={() => navigate(link.id)}
+                  className={`text-sm font-medium transition-colors ${currentPage === link.id ? 'text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
+            <Button variant="outline" className="px-5 py-2 text-sm" onClick={() => navigate('home')}>
+              Try App
+            </Button>
+          </div>
+
+          {/* Mobile Menu Toggle */}
+          <button 
+            className="md:hidden text-gray-300 hover:text-white p-2"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Nav Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden absolute top-20 left-0 right-0 bg-[#0b1121] border-b border-white/5 px-4 py-4 flex flex-col gap-4 shadow-2xl">
+            {navLinks.map(link => (
+              <button 
+                key={link.id}
+                onClick={() => navigate(link.id)}
+                className={`text-left px-4 py-3 rounded-lg text-sm font-medium ${currentPage === link.id ? 'bg-white/10 text-white' : 'text-gray-400 hover:bg-white/5'}`}
+              >
+                {link.label}
+              </button>
+            ))}
+            <div className="px-4 pt-2">
+              <Button className="w-full" onClick={() => navigate('home')}>Get Started</Button>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      {/* Main Content Area */}
+      <main className="pt-20">
+        {renderPage()}
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-[#050811] border-t border-white/5 pt-16 pb-8 px-4 mt-auto">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          
+          <div className="col-span-1 md:col-span-1">
+            <div className="flex items-center gap-2 mb-6">
+              <Instagram className="text-purple-500" size={24} />
+              <span className="text-xl font-bold text-white tracking-tight">InstaSave Pro</span>
+            </div>
+            <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+              The ultimate tool for creators and users to save high-quality content from Instagram directly to their devices. Fast, free, and secure.
+            </p>
+            <div className="flex items-center gap-4 text-gray-400">
+              <Twitter size={20} className="hover:text-purple-400 cursor-pointer transition-colors" />
+              <Github size={20} className="hover:text-purple-400 cursor-pointer transition-colors" />
+              <Linkedin size={20} className="hover:text-purple-400 cursor-pointer transition-colors" />
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-white font-semibold mb-6">Product</h4>
+            <ul className="space-y-3 text-sm text-gray-400">
+              <li><button onClick={() => navigate('home')} className="hover:text-purple-400 transition-colors">Video Downloader</button></li>
+              <li><button onClick={() => navigate('home')} className="hover:text-purple-400 transition-colors">Reels Downloader</button></li>
+              <li><button onClick={() => navigate('home')} className="hover:text-purple-400 transition-colors">Photo Downloader</button></li>
+              <li><button onClick={() => navigate('features')} className="hover:text-purple-400 transition-colors">Features</button></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-white font-semibold mb-6">Resources</h4>
+            <ul className="space-y-3 text-sm text-gray-400">
+              <li><button onClick={() => navigate('blog')} className="hover:text-purple-400 transition-colors">Blog</button></li>
+              <li><button onClick={() => navigate('faq')} className="hover:text-purple-400 transition-colors">Help Center</button></li>
+              <li><button className="hover:text-purple-400 transition-colors">API Documentation</button></li>
+              <li><button className="hover:text-purple-400 transition-colors">Status</button></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-white font-semibold mb-6">Legal</h4>
+            <ul className="space-y-3 text-sm text-gray-400">
+              <li><button onClick={() => navigate('privacy')} className="hover:text-purple-400 transition-colors">Privacy Policy</button></li>
+              <li><button onClick={() => navigate('terms')} className="hover:text-purple-400 transition-colors">Terms of Service</button></li>
+              <li><button className="hover:text-purple-400 transition-colors">Cookie Policy</button></li>
+              <li><button className="hover:text-purple-400 transition-colors">Contact Us</button></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto border-t border-white/5 pt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+          <p>© 2026 InstaSave Pro. All rights reserved.</p>
+          <p>Not affiliated with Instagram or Meta Platforms, Inc.</p>
+        </div>
+      </footer>
+
+      {/* Global Toast */}
+      <Toast message={toast.message} isVisible={toast.show} />
+
+    </div>
+  );
+}
+
+```
